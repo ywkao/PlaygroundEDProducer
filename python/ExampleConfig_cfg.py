@@ -16,4 +16,12 @@ process.source = cms.Source("PoolSource",
 
 process.playgroundedproducer = cms.EDProducer('PlaygroundEDProducer')
 
+# Output definition
+process.out = cms.OutputModule("PoolOutputModule",
+    fileName = cms.untracked.string('file:output/playground_output_RecHits.root'),
+    outputCommands = cms.untracked.vstring('drop *', 'keep *_*_*_TEST'),
+    # type_label_instance_process
+)
+
 process.p = cms.Path(process.playgroundedproducer)
+process.e = cms.EndPath(process.out)

@@ -29,6 +29,9 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 
+#include "Validation/PlaygroundEDProducer/interface/hgcalhit.h"
+#include "Validation/PlaygroundEDProducer/interface/RunningCollection.h"
+#include "Validation/PlaygroundEDProducer/interface/classes.h"
 
 //
 // class declaration
@@ -68,6 +71,8 @@ private:
 //
 PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig)
 {
+
+  produces<Hit>("myHits");
   //register your products
 /* Examples
   produces<ExampleData2>();
@@ -96,6 +101,18 @@ PlaygroundEDProducer::~PlaygroundEDProducer() {
 void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
   printf("[INFO] test\n");
+
+
+  int event = 1001;
+  DetectorId detid = DetectorId();
+  int adc = 20;
+  int toa = 10;
+  int tot = 0;
+  int trigtime = 0;
+  Hit hit( event, detid, adc, toa, tot, trigtime );
+
+  iEvent.put( std::make_unique<Hit>(hit), "hit_TEST" );
+
 /* This is an event example
   //Read 'ExampleData' from the Event
   ExampleData const& in = iEvent.get(inToken_);
