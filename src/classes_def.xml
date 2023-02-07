@@ -1,0 +1,6 @@
+<lcgdict>
+    <class name="DetectorId"/>
+    <class name="edm::Wrapper<DetectorId>"/>
+    <class name="Hit"/>
+    <class name="edm::Wrapper<Hit>"/>
+</lcgdict>

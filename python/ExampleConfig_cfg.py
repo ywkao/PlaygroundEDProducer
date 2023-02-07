@@ -19,7 +19,7 @@ process.playgroundedproducer = cms.EDProducer('PlaygroundEDProducer')
 # Output definition
 process.out = cms.OutputModule("PoolOutputModule",
     fileName = cms.untracked.string('file:output/playground_output_RecHits.root'),
-    outputCommands = cms.untracked.vstring('drop *', 'keep *_*_*_TEST'),
+    outputCommands = cms.untracked.vstring('drop *', 'keep *_*_*_Demo'),
     # type_label_instance_process
 )
 
