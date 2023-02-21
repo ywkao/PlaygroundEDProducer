@@ -14,7 +14,8 @@ process.source = cms.Source("PoolSource",
     )
 )
 
-process.playgroundedproducer = cms.EDProducer('PlaygroundEDProducer')
+#process.playgroundedproducer = cms.EDProducer('PlaygroundEDProducer')
+process.load("Validation.PlaygroundEDProducer.playgroundedproducer_cfi")
 
 # Output definition
 process.out = cms.OutputModule("PoolOutputModule",
