@@ -4,7 +4,7 @@
 namespace {
     struct dictionary {
         DetectorId detId;
-        Hit hit;
-        edm::Wrapper<Hit> wra_Hit;
+        RecHit hit;
+        edm::Wrapper<RecHit> wra_Hit;
     };
 }

@@ -167,7 +167,7 @@ PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig) :
 
   calib_loader.loadParameters(csv_file_name);
 
-  produces<Hit>();
+  produces<RecHit>();
   //register your products
 /* Examples
   produces<ExampleData2>();
@@ -207,11 +207,11 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   std::cout << ">>> nevent = " << nevent << std::endl;
 
   // loop over hit
-  std::vector<Hit> hits[nevent];
+  std::vector<RecHit> hits[nevent];
   int current_half      = 0;
   int recorded_half     = 0;
   double adc_channel_37 = 0.;
-  Hit hit_channel_37;
+  RecHit hit_channel_37;
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -251,7 +251,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
       // record adc of ch37 & fill info of ch37 when processing ch38
       if(globalChannelId % 39 == 37) {
           adc_channel_37 = adc_double;
-          Hit hit( event, detid, adc, toa, tot, trigtime );
+          RecHit hit( event, detid, adc, toa, tot, trigtime );
           hit_channel_37 = hit;
           continue;
 
@@ -266,7 +266,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
           }
 
           // store info of ch37 when process ch38
-          iEvent.put( std::make_unique<Hit>(hit_channel_37) );
+          iEvent.put( std::make_unique<RecHit>(hit_channel_37) );
       }
 
       // perform common mode subtraction
@@ -278,8 +278,8 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
           adc_double -= correction;
       }
 
-      Hit hit( event, detid, adc_double, toa, tot, trigtime );
-      iEvent.put( std::make_unique<Hit>(hit) );
+      RecHit hit( event, detid, adc_double, toa, tot, trigtime );
+      iEvent.put( std::make_unique<RecHit>(hit) );
   }
 
 
