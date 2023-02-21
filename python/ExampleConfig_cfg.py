@@ -17,12 +17,22 @@ process.source = cms.Source("PoolSource",
 #process.playgroundedproducer = cms.EDProducer('PlaygroundEDProducer')
 process.load("Validation.PlaygroundEDProducer.playgroundedproducer_cfi")
 
-# Output definition
-process.out = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string('file:output/playground_output_RecHits.root'),
-    outputCommands = cms.untracked.vstring('drop *', 'keep *_*_*_Demo'),
-    # type_label_instance_process
-)
+## Output definition
+#process.out = cms.OutputModule("PoolOutputModule",
+#    fileName = cms.untracked.string('file:output/playground_output_RecHits.root'),
+#    outputCommands = cms.untracked.vstring('drop *', 'keep *_*_*_Demo'),
+#    # type_label_instance_process
+#)
+#
+#process.p = cms.Path(process.playgroundedproducer)
+#process.e = cms.EndPath(process.out)
 
-process.p = cms.Path(process.playgroundedproducer)
-process.e = cms.EndPath(process.out)
+process.load("Validation.PlaygroundEDProducer.testdqmedanalyzer_cfi")
+
+process.DQMStore = cms.Service("DQMStore")
+
+process.load("DQMServices.FileIO.DQMFileSaverOnline_cfi")
+process.dqmSaver.tag = 'TEST'
+process.dqmSaver.path = './eos/'
+
+process.p = cms.Path(process.playgroundedproducer + process.testdqmedanalyzer + process.dqmSaver)

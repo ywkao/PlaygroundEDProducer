@@ -204,11 +204,14 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
       // record adc of ch37 & fill info of ch37 when processing ch38
       if(globalChannelId % 39 == 37) {
           adc_channel_37 = adc_double;
-          RecHit hit( event, detid, adc, toa, tot, trigtime );
+          RecHit hit( event, detid, adc_double, adc_channel_CM, adcm, toa, tot, trigtime );
           hit_channel_37 = hit;
           continue;
 
       } else if(globalChannelId % 39 == 38) {
+          // update CM adc value
+          hit_channel_37.set_adc_CM(adc_channel_CM);
+
           // CM subtraction for channel 37
           if(flag_perform_cm_subtraction) {
               std::vector<double> parameters = calib_loader.map_cm_parameters[globalChannelId-1];
@@ -216,6 +219,8 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
               double intercept = parameters[1];
               double correction = adc_channel_CM*slope + intercept;
               adc_channel_37 -= correction;
+
+              hit_channel_37.set_adc(adc_channel_37);
           }
 
           // store info of ch37 when process ch38
@@ -231,7 +236,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
           adc_double -= correction;
       }
 
-      RecHit hit( event, detid, adc_double, toa, tot, trigtime );
+      RecHit hit( event, detid, adc_double, adc_channel_CM, adcm, toa, tot, trigtime );
       iEvent.put( std::make_unique<RecHit>(hit) );
   }
 
