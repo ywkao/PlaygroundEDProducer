@@ -35,6 +35,8 @@
 #include "Validation/PlaygroundEDProducer/interface/hgcalhit.h"
 #include "Validation/PlaygroundEDProducer/interface/RunningCollection.h"
 
+#include "Validation/PlaygroundEDProducer/interface/LoadCalibrationParameters.h"
+
 // for loading ntuple as temporary input
 #include "TBranch.h"
 #include "TFile.h"
@@ -62,8 +64,6 @@ private:
   virtual void     enable_pedestal_subtraction();
   virtual void     enable_cm_subtraction();
 
-  virtual void     Load_metaData(); // calibration parameters, i.e. pedestal, CM correlation, etc.
-
   //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
   //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
   //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
@@ -73,18 +73,17 @@ private:
   std::string folder_;
   TString myTag;
   std::vector<int> calibration_flags;
+  std::string csv_file_name;
 
   TString tag_calibration;
   TString tag_channelId;
 
+  CalibrationParameterLoader calib_loader;
   RunningCollection myRunStatCollection;
   RunningStatistics myRecorder;
 
   bool flag_perform_pedestal_subtraction;
   bool flag_perform_cm_subtraction;
-
-  std::map<int, double> map_pedestals;
-  std::map<int, std::vector<double> > map_cm_parameters;
 
   int globalChannelId;
   double adc_double;
@@ -146,10 +145,11 @@ private:
 //
 // constructors and destructor
 //
-PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig)
-    : folder_(iConfig.getParameter<std::string>("folder")),
+PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig) :
+    folder_(iConfig.getParameter<std::string>("folder")),
     myTag(iConfig.getParameter<std::string>( "DataType" )),
-    calibration_flags(iConfig.getParameter<std::vector<int> >( "CalibrationFlags" ))
+    calibration_flags(iConfig.getParameter<std::vector<int> >( "CalibrationFlags" )),
+    csv_file_name(iConfig.getParameter<std::string>( "CalibrationCSVFile" ))
 {
   // load trees from beam data / pedestal run
   TString root_beamRun  = "/eos/cms/store/group/dpg_hgcal/tb_hgcal/2022/sps_oct2022/pion_beam_150_320fC/beam_run/run_20221007_191926/beam_run0.root";
@@ -165,7 +165,7 @@ PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig)
   if(calibration_flags[0]) enable_pedestal_subtraction();
   if(calibration_flags[1]) enable_cm_subtraction();
 
-  Load_metaData();
+  calib_loader.loadParameters(csv_file_name);
 
   produces<Hit>();
   //register your products
@@ -237,7 +237,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
 
       // perform pedestal subtraction
       if(flag_perform_pedestal_subtraction) {
-          double pedestal = map_pedestals[globalChannelId];
+          double pedestal = calib_loader.map_pedestals[globalChannelId];
           adc_double -= pedestal;
       }
 
@@ -258,7 +258,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
       } else if(globalChannelId % 39 == 38) {
           // CM subtraction for channel 37
           if(flag_perform_cm_subtraction) {
-              std::vector<double> parameters = map_cm_parameters[globalChannelId-1];
+              std::vector<double> parameters = calib_loader.map_cm_parameters[globalChannelId-1];
               double slope = parameters[0];
               double intercept = parameters[1];
               double correction = adc_channel_CM*slope + intercept;
@@ -271,7 +271,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
 
       // perform common mode subtraction
       if(flag_perform_cm_subtraction) {
-          std::vector<double> parameters = map_cm_parameters[globalChannelId];
+          std::vector<double> parameters = calib_loader.map_cm_parameters[globalChannelId];
           double slope = parameters[0];
           double intercept = parameters[1];
           double correction = adc_channel_CM*slope + intercept;
@@ -347,42 +347,6 @@ void PlaygroundEDProducer::enable_pedestal_subtraction() { flag_perform_pedestal
 
 void PlaygroundEDProducer::enable_cm_subtraction() { flag_perform_cm_subtraction = true; tag_calibration = "_cm_subtracted"; }
 
-void PlaygroundEDProducer::Load_metaData()
-{
-    TString csv_file_name = "./meta_conditions/calibration_parameters.csv";
-    printf("[INFO] Load calibration parameters: %s\n", csv_file_name.Data());
-
-    std::string line;
-    std::ifstream loaded_csv_file(csv_file_name.Data());
-
-    if(loaded_csv_file.is_open()) {
-        while(getline(loaded_csv_file, line)) {
-            // skip comments
-            if(line.find("#")!=std::string::npos) continue;
-
-            std::size_t found_1st_index = line.find(",");
-            std::size_t found_2nd_index = line.find(",", found_1st_index+1, 1);
-            std::size_t found_3rd_index = line.find(",", found_2nd_index+1, 1);
-            std::size_t found_4th_index = line.find(",", found_3rd_index+1, 1);
-
-            int channel_id   = std::stoi( line.substr(0,found_1st_index) );
-            double pedestal  = std::stod( line.substr(found_1st_index+1, found_2nd_index) );
-            double slope     = std::stod( line.substr(found_2nd_index+1, found_3rd_index) );
-            double intercept = std::stod( line.substr(found_3rd_index+1, found_4th_index) );
-
-            std::vector<double> v = {slope, intercept};
-            map_pedestals[channel_id] = pedestal;
-            map_cm_parameters[channel_id] = v;
-
-            printf("channel_id = %d, pedestal = %.3f, slope = %.3f, intercept = %6.3f\n",
-                    channel_id, map_pedestals[channel_id], map_cm_parameters[channel_id][0], map_cm_parameters[channel_id][1] );
-        }
-        loaded_csv_file.close();
-    } else {
-        std::cout << "[ERROR] unable to open " << csv_file_name.Data() << std::endl;
-    }
-}
-
 // ------------ method called once each stream before processing any runs, lumis or events  ------------
 void PlaygroundEDProducer::beginStream(edm::StreamID) {
   // please remove this method if not needed
@@ -433,6 +397,7 @@ void PlaygroundEDProducer::fillDescriptions(edm::ConfigurationDescriptions& desc
   desc.add<std::string>("folder", "HGCAL/RecHits");
   desc.add<std::string>("DataType", "beam");
   desc.add<std::vector<int>>("CalibrationFlags", {1, 1, 0, 0, 0, 0, 0, 0, 0, 0});
+  desc.add<std::string>("CalibrationCSVFile", "./meta_conditions/calibration_parameters.csv");
   descriptions.add("playgroundedproducer", desc);
 
   //---------- Definitions of calibration flags ----------#

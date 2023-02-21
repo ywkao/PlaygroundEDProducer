@@ -6,8 +6,8 @@
 
 struct statistics {
     double nevents;
-    double mean_x;
-    double mean_y;
+    double mean_x; // CM mode adc
+    double mean_y; // normal channel adc
     double variance_x;
     double variance_y;
     double covariance;
@@ -26,6 +26,7 @@ class RunningStatistics {
         double get_correlation();
         double get_slope();
         double get_intercept();
+        double get_mean_adc(); // return mean_y
 
     private:
         statistics current;
@@ -76,6 +77,7 @@ void RunningStatistics::add_entry(double x, double y)
 double RunningStatistics::get_correlation() { return current.correlation; }
 double RunningStatistics::get_slope()       { return current.slope;       }
 double RunningStatistics::get_intercept()   { return current.intercept;   }
+double RunningStatistics::get_mean_adc()    { return current.mean_y;      }
 
 void RunningStatistics::print_statistics()
 {
