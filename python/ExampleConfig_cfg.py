@@ -14,7 +14,9 @@ process.source = cms.Source("PoolSource",
     )
 )
 
-#process.playgroundedproducer = cms.EDProducer('PlaygroundEDProducer')
+#--------------------------------------------------
+# EDProducer
+#--------------------------------------------------
 process.load("Validation.PlaygroundEDProducer.playgroundedproducer_cfi")
 
 ## Output definition
@@ -27,7 +29,16 @@ process.load("Validation.PlaygroundEDProducer.playgroundedproducer_cfi")
 #process.p = cms.Path(process.playgroundedproducer)
 #process.e = cms.EndPath(process.out)
 
-process.load("Validation.PlaygroundEDProducer.testdqmedanalyzer_cfi")
+#--------------------------------------------------
+# DQM EDAnalyzer
+#--------------------------------------------------
+#process.load("Validation.PlaygroundEDProducer.testdqmedanalyzer_cfi")
+process.testdqmedanalyzer = cms.EDProducer('testDQMEDAnalyzer',
+  source = cms.InputTag("playgroundedproducer"),
+  folder = cms.string('HGCAL/RecHits'),
+  DataType = cms.string('beam'),
+  mightGet = cms.optional.untracked.vstring
+)
 
 process.DQMStore = cms.Service("DQMStore")
 
@@ -35,4 +46,7 @@ process.load("DQMServices.FileIO.DQMFileSaverOnline_cfi")
 process.dqmSaver.tag = 'TEST'
 process.dqmSaver.path = './eos/'
 
+#--------------------------------------------------
+# Path
+#--------------------------------------------------
 process.p = cms.Path(process.playgroundedproducer + process.testdqmedanalyzer + process.dqmSaver)
