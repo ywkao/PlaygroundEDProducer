@@ -181,7 +181,7 @@ void testDQMEDAnalyzer::export_calibration_parameters() {
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void testDQMEDAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
     edm::ParameterSetDescription desc;
-    desc.add<edm::InputTag>("source", "playgroundedproducer");
+    //desc.add<edm::InputTag>("source", "playgroundedproducer");
     desc.add<std::string>("folder", "HGCAL/RecHits");
     desc.add<std::string>("DataType", "beam");
     descriptions.add("testdqmedanalyzer", desc);
