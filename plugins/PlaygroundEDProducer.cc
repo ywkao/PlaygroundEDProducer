@@ -1,40 +1,17 @@
-// -*- C++ -*-
-//
-// Package:    Validation/PlaygroundEDProducer
-// Class:      PlaygroundEDProducer
-//
-/**\class PlaygroundEDProducer PlaygroundEDProducer.cc Validation/PlaygroundEDProducer/plugins/PlaygroundEDProducer.cc
-
- Description: [one line class summary]
-
- Implementation:
-     [Notes on implementation]
-*/
-//
-// Original Author:  Yu-Wei Kao
-//         Created:  Wed, 01 Feb 2023 06:56:48 GMT
-//
-//
-
-// system include files
 #include <memory>
 #include <string>
 #include <fstream>
 #include <iostream>
 
-// user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 
 #include "Validation/PlaygroundEDProducer/interface/hgcalhit.h"
 #include "Validation/PlaygroundEDProducer/interface/RunningCollection.h"
-
 #include "Validation/PlaygroundEDProducer/interface/LoadCalibrationParameters.h"
 
 // for loading ntuple as temporary input
@@ -134,17 +111,9 @@ private:
 };
 
 //
-// constants, enums and typedefs
-//
-
-
-//
-// static data member definitions
-//
-
-//
 // constructors and destructor
 //
+
 PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig) :
     folder_(iConfig.getParameter<std::string>("folder")),
     myTag(iConfig.getParameter<std::string>( "DataType" )),
@@ -168,25 +137,9 @@ PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig) :
   calib_loader.loadParameters(csv_file_name);
 
   produces<RecHit>();
-  //register your products
-/* Examples
-  produces<ExampleData2>();
-
-  //if do put with a label
-  produces<ExampleData2>("label");
- 
-  //if you want to put into the Run
-  produces<ExampleData2,InRun>();
-*/
-  //now do what ever other initialization is needed
 }
 
-PlaygroundEDProducer::~PlaygroundEDProducer() {
-  // do anything here that needs to be done at destruction time
-  // (e.g. close files, deallocate resources etc.)
-  //
-  // please remove this method altogether if it would be left empty
-}
+PlaygroundEDProducer::~PlaygroundEDProducer() {}
 
 //
 // member functions
@@ -282,21 +235,7 @@ void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
       iEvent.put( std::make_unique<RecHit>(hit) );
   }
 
-
-/* This is an event example
-  //Read 'ExampleData' from the Event
-  ExampleData const& in = iEvent.get(inToken_);
-
-  //Use the ExampleData to create an ExampleData2 which 
-  // is put into the Event
-  iEvent.put(std::make_unique<ExampleData2>(in));
-*/
-
-/* this is an EventSetup example
-  //Read SetupData from the SetupRecord in the EventSetup
-  SetupData& setup = iSetup.getData(setupToken_);
-*/
-}
+} // end of produce function
 
 // ------------ auxilliary methods  ------------
 Long64_t PlaygroundEDProducer::LoadTree(Long64_t entry)
