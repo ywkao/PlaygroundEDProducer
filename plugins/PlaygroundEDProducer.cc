@@ -121,8 +121,8 @@ PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig) :
     csv_file_name(iConfig.getParameter<std::string>( "CalibrationCSVFile" ))
 {
   // load trees from beam data / pedestal run
-  TString root_beamRun  = "/eos/cms/store/group/dpg_hgcal/tb_hgcal/2022/sps_oct2022/pion_beam_150_320fC/beam_run/run_20221007_191926/beam_run0.root";
-  TString root_pedestal = "/eos/cms/store/group/dpg_hgcal/tb_hgcal/2022/sps_oct2022/pedestals/pedestal_320fC/pedestal_run/run_20221008_192720/pedestal_run0.root";
+  TString root_beamRun  = "/afs/cern.ch/work/y/ykao/public/forJeremi/beam_run0.root";
+  TString root_pedestal = "/afs/cern.ch/work/y/ykao/public/forJeremi/pedestal_run0.root";
   TString input = (myTag=="beam") ? root_beamRun : root_pedestal;
   printf("[INFO] Input rootfile: %s\n", input.Data());
 
