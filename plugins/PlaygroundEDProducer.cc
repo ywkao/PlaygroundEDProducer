@@ -13,6 +13,9 @@
 #include "Validation/PlaygroundEDProducer/interface/hgcalhit.h"
 #include "Validation/PlaygroundEDProducer/interface/RunningCollection.h"
 #include "Validation/PlaygroundEDProducer/interface/LoadCalibrationParameters.h"
+//#include "Validation/PlaygroundEDProducer/interface/test_function_unpacker.h"
+#include "EventFilter/HGCalRawToDigi/interface/HGCalUnpacker.h"
+#include "DataFormats/HGCalDigi/interface/HGCalElectronicsId.h"
 
 // for loading ntuple as temporary input
 #include "TBranch.h"
@@ -142,6 +145,47 @@ PlaygroundEDProducer::PlaygroundEDProducer(const edm::ParameterSet& iConfig) :
 PlaygroundEDProducer::~PlaygroundEDProducer() {}
 
 //
+// Test functions for ECOND unpacker
+//
+
+uint32_t little_to_big(uint32_t num) {
+    return ((num & 0x000000ff) << 24) | ((num & 0x0000ff00) << 8) | ((num & 0x00ff0000) >> 8) | ((num & 0xff000000) >> 24);
+}
+
+uint16_t enabledERXMapping(uint16_t sLink, uint8_t captureBlock, uint8_t econd) { return 0b000111101101; }
+HGCalElectronicsId logicalMapping(HGCalElectronicsId elecID) { return elecID; }
+
+std::vector<uint32_t> readRawDataFrom(std::string fname, bool doHost2BigEndian) {
+  std::vector<uint32_t> data;
+  
+  //open file
+  FILE* in_fptr = fopen(fname.c_str(),"rb");
+  if (in_fptr == NULL) {
+    std::cout << "Failed to read input file: " << fname << std::endl;
+    return data;
+  }
+  
+  //determine file size in 4Byte words
+  auto start=ftell(in_fptr);
+  fseek(in_fptr, 0, SEEK_END); //go to the end of the file
+  auto end=ftell(in_fptr);
+  const auto fsize = (end-start)/sizeof(uint32_t); //measure the difference
+  fseek(in_fptr, 0, SEEK_SET); //set again the position at start
+  
+  //read file
+  data.resize(fsize);
+  uint32_t *p = new uint32_t;
+  for(uint32_t i=0; i<fsize; i++) {
+    assert(fread(p, sizeof *p, 1, in_fptr)==1);
+    //data[i]=doHost2BigEndian ? htobe32(*p) : *p;
+    data[i]=doHost2BigEndian ? little_to_big(*p) : *p;
+  }
+  delete p;
+
+  return data;
+}
+
+//
 // member functions
 //
 
@@ -149,6 +193,21 @@ PlaygroundEDProducer::~PlaygroundEDProducer() {}
 void PlaygroundEDProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
   printf("[INFO] test\n");
+
+  HGCalUnpackerConfig config;
+  HGCalUnpacker<HGCalElectronicsId> unpacker(config);
+
+  uint16_t test_endian = 0x0001;
+  uint8_t* test_endian_first_byte = (uint8_t*)&test_endian;
+  bool islittleendian = *test_endian_first_byte;
+  std::string fname("/afs/cern.ch/work/y/ykao/public/forJeremi/ECOND_20k_big_endian.bin");
+  std::vector<uint32_t> data = readRawDataFrom(fname, islittleendian);
+
+  unpacker.parseECOND(data.data(), data.size(), enabledERXMapping, logicalMapping );
+
+  printf("[INFO] unpacker.getChannelData().size(): %ld\n", unpacker.getChannelData().size());
+  printf("[INFO] unpacker.getCommonModeIndex().size(): %ld\n", unpacker.getCommonModeIndex().size());
+  printf("[INFO] unpacker.getCommonModeData().size(): %ld\n", unpacker.getCommonModeData().size());
 
   //--------------------------------------------------
   // migrate from a standalone c++ code
