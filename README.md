@@ -13,6 +13,12 @@ $ time scram b -j10
 $ time cmsRun python/ExampleConfig_cfg.py
 ```
 
+### Features
+- Level-0 calibrations (pedestal & CM subtractions) are applied
+- Pedestal and CM parameters are evaluated using running statistics
+- Parameters are loaded using an independent user-defined C++ class (in csv format)
+- Unpacker and associated test functions are equipped (test purpose only)
+
 ### Caveats
 - The current input is ntuple from test beam data taken in 2022 October.
 ```
@@ -23,3 +29,4 @@ $ time cmsRun python/ExampleConfig_cfg.py
 ```
 process.maxEvents.input = 1
 ```
+- RecHit format follows a simpler version -> need to take the standard one in CMSSW.
